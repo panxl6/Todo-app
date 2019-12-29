@@ -1,5 +1,7 @@
 <?php
 
+use Library\Log;
+
 function autoload($className) {
 	$path = '';
 
@@ -16,9 +18,21 @@ function autoload($className) {
 
 spl_autoload_register('autoload');
 
-class App {
-	public function run() {
+class App
+{
+	public function run()
+	{
 		$router = new Router\Router();
 		$router->dispatch();
 	}
 }
+
+function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
+{
+	$logger = new Log();
+	$errcontext = json_encode($errcontext);
+	$text = "错误码:{$errno}, \n错误信息: {$errstr}, \n错误文件: {$errfile}, \n错误行: {$errline}, \n上下文信息: {$errcontext}";
+	$logger->log($text);
+}
+
+set_error_handler('errorHandler');
