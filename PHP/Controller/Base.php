@@ -21,10 +21,14 @@ class Base
     protected function getParam($name, $method='GET')
     {
         // TODO:sql注入字符串过滤
-        if ($method == 'POST') {
+        if ($method == 'POST' && array_key_exists($name, $_POST)) {
             return $_POST[$name];
         }
 
-        return $_GET[$name];
+        if (array_key_exists($name, $_GET)) {
+            return $_GET[$name];
+        }
+
+        return '';
     }
 }

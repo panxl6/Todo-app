@@ -2,36 +2,60 @@
 
 namespace Router;
 
-use Controller;
+use Library\Log;
 
 class Router
 {
-    public function dispatch()
-    {
-        $controllerName = $_GET['controller'];
-        $actionName = $_GET['action'];
-        $controllerName = 'todo';
-        $actionName = 'addActivity';
+	public function dispatch()
+	{
+		$route = $this->parseAction();
 
-        if (empty($controllerName) || empty($actionName)) {
-            echo "您访问的接口不存在";
-            return;
-        }
+		$controllerName = $route['controller'];
+		$actionName = $route['action'];
+		$logger = new Log();
 
-        $controllerName = '\Controller\\' . ucwords($controllerName);
+		if (empty($controllerName) || empty($actionName)) {
+			$logger->log("路由信息为空");
+			return;
+		}
 
-        if (class_exists($controllerName, true) == false) {
-            echo "您访问的接口不存在111";
-            return;
-        }
+		$controllerName = '\Controller\\' . ucwords($controllerName);
 
-        $controller = new $controllerName();
+		if (class_exists($controllerName, true) == false) {
+			$logger->log("访问的Controller不存在:".json_encode($route));
+			return;
+		}
 
-        if (method_exists($controller, $actionName) == false) {
-            echo "您访问的接口不存在";
-            return;
-        }
+		$controller = new $controllerName();
 
-        $controller->$actionName();  
-    }
+		if (method_exists($controller, $actionName) == false) {
+			$logger->log("访问的方法不存在:".json_encode($route));
+			return;
+		}
+
+		try {
+			$controller->$actionName();
+		} catch(Exception $exception) {
+			$logger->log("调用异常:".$exception->getMessage());
+		}
+		
+	}
+
+	private function parseAction()
+	{
+		$routeUrl = $_SERVER['DOCUMENT_URI'];
+		if (empty($routeUrl)) {
+			$routeUrl = '';
+		}
+
+		// todo:异常处理
+
+		$routeArr = explode('/', $routeUrl);
+		$route = [
+			'controller' => implode('\\', array_slice($routeArr, 2, count($routeArr) - 3)),
+			'action' => $routeArr[count($routeArr) - 1],
+		];
+
+		return $route;
+	}
 }
