@@ -16,29 +16,29 @@ class Router
 
 		if (empty($controllerName) || empty($actionName)) {
 			$logger->log("路由信息为空");
-			return;
+			return false;
 		}
 
 		$controllerName = '\Controller\\' . ucwords($controllerName);
 
 		if (class_exists($controllerName, true) == false) {
 			$logger->log("访问的Controller不存在:".json_encode($route));
-			return;
+			return false;
 		}
 
 		$controller = new $controllerName();
-
 		if (method_exists($controller, $actionName) == false) {
 			$logger->log("访问的方法不存在:".json_encode($route));
-			return;
+			return false;
 		}
 
 		try {
 			$controller->$actionName();
 		} catch(Exception $exception) {
 			$logger->log("调用异常:".$exception->getMessage());
+			return false;
 		}
-		
+		return true;	
 	}
 
 	private function parseAction()
@@ -48,9 +48,13 @@ class Router
 			$routeUrl = '';
 		}
 
-		// todo:异常处理
-
 		$routeArr = explode('/', $routeUrl);
+		if (empty($routeArr) || count($routeArr)<3) {
+			return [
+				'controller' => '/',
+				'action' => ''
+			];
+		}
 		$route = [
 			'controller' => implode('\\', array_slice($routeArr, 2, count($routeArr) - 3)),
 			'action' => $routeArr[count($routeArr) - 1],
