@@ -21,8 +21,28 @@ TODO应用简单常见，是最佳入门范例之一。
 2. [Go语言版本的实现](https://blog.csdn.net/panxl6/article/details/78758468)
 
 # 单一入口
-如上所示，当我们需要多个层级的url时，如果直接写多个对应目录的PHP去实现。那么每个PHP之间都会存在大量的重复代码。比如授权、打印日志。单一入口的文件应用，可以通过分层复用公共的逻辑。
+如上所示，当我们需要多个层级的url时，如果直接写多个对应目录的PHP去实现。那么每个PHP之间都会存在大量的重复代码。比如授权、打印日志。单一入口的文件应用，可以通过分层复用公共的逻辑。单一入口的限制，需要配合Nginx。
 
+```bash
+server {
+    listen 80;
+
+    server_name your-domain.com;
+
+    index index.php;
+
+    root /home/ubuntu/Todo-app/PHP;
+
+    location / {
+        try_files $uri $uri/ index.php?$query_string =404;
+    }
+
+    location ~ \.php(/|$) {
+        include fastcgi.conf;
+        fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+    }
+}
+```
 
 # MVC
 改为单一入口之后，资源访问路径都会由入口文件index.php进行分发。主要的思想是根据访问的url，定位到Controller类，然后动态调用这个类对应的方法。如果不想要按默认方式查找方法，那就需要定义路由映射。
